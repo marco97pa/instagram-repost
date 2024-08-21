@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import os
 import yaml
 from instagrapi import Client
 from PIL import Image
@@ -82,6 +83,7 @@ def instagram_last_post(source, user_id):
                             filename,
                             clean_caption(media.caption_text)
                         )
+                    delete_files(filename)
                 # If this is a photo
                 if media.media_type == 1:
                     content_type = "photo"
@@ -95,6 +97,7 @@ def instagram_last_post(source, user_id):
                             filename,
                             clean_caption(media.caption_text)
                         )
+                    delete_files(filename)
             # If this is an album, a collection of photos and videos
             else:
                 content_type = "collection"
@@ -121,6 +124,7 @@ def instagram_last_post(source, user_id):
                         filenames,
                         clean_caption(media.caption_text)
                     )
+                delete_files(filenames)
 
         # Save last post timestamp
         if media.taken_at.timestamp() > source["last_post"]:
@@ -181,6 +185,27 @@ def download(url, filename):
     file.close()
 
     return filename
+
+def delete_files(file_list):
+    """Deletes all files from a list
+
+    Args:
+      file_list: a list of files or a string of the path of a single file
+    """
+
+    # Ensure file_list is a list
+    if isinstance(file_list, str):
+        file_list = [file_list]
+
+    for file_path in file_list:
+        try:
+            os.remove(file_path)
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+        except PermissionError:
+            print(f"Permission denied: {file_path}")
+        except Exception as e:
+            print(f"Error deleting {file_path}: {e}")
 
 def edit_image(base_image_path, overlay_image_path):
     """Adds an overlay to an image on the top left corner
