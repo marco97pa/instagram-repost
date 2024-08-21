@@ -1,0 +1,17 @@
+# PyYAML
+# https://pypi.org/project/PyYAML/
+# Needed to work with YAML files
+pyyaml
+#
+#
+# instagrapi
+# https://github.com/subzeroid/instagrapi
+# Needed to retrieve data from Instagram
+instagrapi
+#
+#
+# Pillow
+# https://pypi.org/project/Pillow/
+# Needed to edit images
+pillow
+#
