@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import yaml
 from instagrapi import Client
 from PIL import Image
 import requests
@@ -24,7 +25,7 @@ def load_sources():
     with open('data.yaml', encoding="utf-8") as file:
         sources = yaml.load(file, Loader=yaml.FullLoader)
 
-        print()
+        out = ""
         for source in sources:
             out += source["name"]
             out += ", "
@@ -64,65 +65,66 @@ def instagram_last_post(source, user_id):
     medias = cl.user_medias(user_id, 5)
     
     for media in medias:
-      # If the last post timestamp is greater (post is newest) or the saved post does not exist
-      if "last_post" not in source or media.taken_at.timestamp() > source["last_post"]:
-        link = "https://www.instagram.com/p/" + media.code
-        # If there is only one element in the post (it's not an album)
-        if media.media_type != 8:
-            # If this is a video
-            if media.media_type == 2:
-                content_type = "video"
-                filename = "temp.mp4"
-                url = "{}".format(media.video_url)
-                download(url, filename)
-                print("{} posted a new {} on Instagram, at {} - Link: {}".format(source["name"], content_type, media.taken_at.timestamp(), link))
-                if not skip_post:
-                    cl.video_upload(
-                        filename,
-                        clean_caption(media.caption_text)
-                    )
-            # If this is a photo
-            if media.media_type == 1:
-                content_type = "photo"
-                filename = "temp.jpg"
-                url = "{}".format(media.thumbnail_url)
-                download(url, filename)
-                edit_image(filename, OVERLAY)
-                print("{} posted a new {} on Instagram, at {} - Link: {}".format(source["name"], content_type, media.taken_at.timestamp(), link))
-                if not skip_post:
-                    cl.photo_upload(
-                        filename,
-                        clean_caption(media.caption_text)
-                    )
-        # If this is an album, a collection of photos and videos
-        else:
-            content_type = "collection"
-            i = 0
-            filenames = []
-            # Get all the elements of the collection
-            for resource in media.resources:
-                i=i+1
-                # If it's an image
-                if resource.media_type == 1:
-                    filename = "temp{}.jpg".format(i)
-                    url = "{}".format(resource.thumbnail_url)
+        # If the last post timestamp is greater (post is newest) or the saved post does not exist
+        if "last_post" not in source or media.taken_at.timestamp() > source["last_post"]:
+            link = "https://www.instagram.com/p/" + media.code
+            # If there is only one element in the post (it's not an album)
+            if media.media_type != 8:
+                # If this is a video
+                if media.media_type == 2:
+                    content_type = "video"
+                    filename = "temp.mp4"
+                    url = "{}".format(media.video_url)
+                    download(url, filename)
+                    print("{} posted a new {} on Instagram, at {} - Link: {}".format(source["name"], content_type, media.taken_at.timestamp(), link))
+                    if not skip_post:
+                        cl.video_upload(
+                            filename,
+                            clean_caption(media.caption_text)
+                        )
+                # If this is a photo
+                if media.media_type == 1:
+                    content_type = "photo"
+                    filename = "temp.jpg"
+                    url = "{}".format(media.thumbnail_url)
                     download(url, filename)
                     edit_image(filename, OVERLAY)
-                # If it's a video
-                else:
-                    filename = "temp{}.mp4".format(i)
-                    url = "{}".format(resource.video_url)
-                    download(url, filename)
-                filenames.append(filename)
-            print("{} posted a new {} of {} medias on Instagram, at {} - Link: {}".format(source["name"], content_type, i, media.taken_at.timestamp(), link))
-            if not skip_post:
-                cl.album_upload(
-                    filenames,
-                    clean_caption(media.caption_text)
-                )
+                    print("{} posted a new {} on Instagram, at {} - Link: {}".format(source["name"], content_type, media.taken_at.timestamp(), link))
+                    if not skip_post:
+                        cl.photo_upload(
+                            filename,
+                            clean_caption(media.caption_text)
+                        )
+            # If this is an album, a collection of photos and videos
+            else:
+                content_type = "collection"
+                i = 0
+                filenames = []
+                # Get all the elements of the collection
+                for resource in media.resources:
+                    i=i+1
+                    # If it's an image
+                    if resource.media_type == 1:
+                        filename = "temp{}.jpg".format(i)
+                        url = "{}".format(resource.thumbnail_url)
+                        download(url, filename)
+                        edit_image(filename, OVERLAY)
+                    # If it's a video
+                    else:
+                        filename = "temp{}.mp4".format(i)
+                        url = "{}".format(resource.video_url)
+                        download(url, filename)
+                    filenames.append(filename)
+                print("{} posted a new {} of {} medias on Instagram, at {} - Link: {}".format(source["name"], content_type, i, media.taken_at.timestamp(), link))
+                if not skip_post:
+                    cl.album_upload(
+                        filenames,
+                        clean_caption(media.caption_text)
+                    )
 
-    # Return last post timestamp
-    source["last_post"] = media.taken_at.timestamp()
+        # Save last post timestamp
+        if media.taken_at.timestamp() > source["last_post"]:
+            source["last_post"] = media.taken_at.timestamp()
     return source
 
 def instagram_profile(username):
@@ -227,4 +229,6 @@ if __name__ == '__main__':
     for source in sources:
         user_id = instagram_profile(source["name"])
         source = instagram_last_post(source, user_id)
+
+    write_sources(sources)
     
