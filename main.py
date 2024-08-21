@@ -26,11 +26,8 @@ def load_sources():
     with open('data.yaml', encoding="utf-8") as file:
         sources = yaml.load(file, Loader=yaml.FullLoader)
 
-        out = ""
-        for source in sources:
-            out += source["name"]
-            out += ", "
-        print("Sources: {}".format(out))
+        names = [item['name'] for item in sources]
+        print("Sources: {}".format( ", ".join(names) ))
 
         return sources
 
@@ -141,7 +138,7 @@ def instagram_profile(username):
       - a Profile ID
     """
 
-    print("({}) Fetching details".format(username))
+    print("({}) Fetching profile details".format(username))
     user_id = cl.user_id_from_username(username)
     return user_id
 
