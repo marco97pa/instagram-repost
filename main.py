@@ -7,7 +7,8 @@ from PIL import Image
 import requests
 
 OVERLAY = "overlay.png"
-skip_post = True
+skip_post = False
+skip_editing = False
 
 # Init
 cl = Client()
@@ -212,17 +213,21 @@ def edit_image(base_image_path, overlay_image_path):
       base_image_path: image to add the overlay, will be overwritten
       overlay_image_path: the overlay to add
     """
-    # Open the base image
-    base_image = Image.open(base_image_path)
-    
-    # Open the overlay image
-    overlay_image = Image.open(overlay_image_path)
-    
-    # Paste the overlay image on the base image at the top-left corner (0, 0)
-    base_image.paste(overlay_image, (0, 0), overlay_image)
-    
-    # Save the result
-    base_image.save(base_image_path)
+
+    if skip_editing is True:
+        print("Skipped adding overlay since the --no-overlay option has been passed.")
+    else:
+        # Open the base image
+        base_image = Image.open(base_image_path)
+        
+        # Open the overlay image
+        overlay_image = Image.open(overlay_image_path)
+        
+        # Paste the overlay image on the base image at the top-left corner (0, 0)
+        base_image.paste(overlay_image, (0, 0), overlay_image)
+        
+        # Save the result
+        base_image.save(base_image_path)
 
 
 # Main code
@@ -234,8 +239,11 @@ if __name__ == '__main__':
         print("Optional arguments: --no-post to skip posting on Instagram")
         sys.exit(1)
 
-    if sys.argv[3] == "--no-post":
+    if sys.argv[3] == "--no-post" or sys.argv[4] == "--no-post":
         skip_post = True
+    
+    if sys.argv[3] == "--no-overlay" or sys.argv[4] == "--no-overlay":
+        skip_editing = True
 
     # Get Instagram username and password
     ACCOUNT_USERNAME = sys.argv[1]
