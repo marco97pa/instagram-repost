@@ -125,7 +125,7 @@ def instagram_last_post(source, user_id):
                 delete_files(filenames)
 
         # Save last post timestamp
-        if media.taken_at.timestamp() > source["last_post"]:
+        if "last_post" not in source or media.taken_at.timestamp() > source["last_post"]:
             source["last_post"] = media.taken_at.timestamp()
     return source
 
@@ -190,7 +190,6 @@ def delete_files(file_list):
     Args:
       file_list: a list of files or a string of the path of a single file
     """
-
     # Ensure file_list is a list
     if isinstance(file_list, str):
         file_list = [file_list]
@@ -234,15 +233,17 @@ def edit_image(base_image_path, overlay_image_path):
 if __name__ == '__main__':
     
     # Show an error if no username and password are passed
-    if len(sys.argv) < 3:
-        print("Usage: python script.py <username> <password>")
-        print("Optional arguments: --no-post to skip posting on Instagram")
+    if len(sys.argv) < 3 or len(sys.argv) > 5:
+        print("Usage: python script.py <username> <password> (--no-post) (--no-overlay)")
+        print("Optional arguments:")
+        print("\t--no-post to skip posting on Instagram")
+        print("\t--no-post to skip adding an overlay")
         sys.exit(1)
 
-    if sys.argv[3] == "--no-post" or sys.argv[4] == "--no-post":
+    if len(sys.argv) == 4 and sys.argv[3] == "--no-post":
         skip_post = True
     
-    if sys.argv[3] == "--no-overlay" or sys.argv[4] == "--no-overlay":
+    if len(sys.argv) == 5 and sys.argv[4] == "--no-overlay":
         skip_editing = True
 
     # Get Instagram username and password
